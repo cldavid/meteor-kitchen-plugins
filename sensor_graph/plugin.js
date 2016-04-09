@@ -15,18 +15,49 @@ component.html += '     {{#each sensor_list}}';
 component.html += '     <option value=\"{{this}}\">{{this}}</option>';
 component.html += '     {{/each}}';
 component.html += '</select>';
+component.html += '<h3>Temperature</h3>{{> c3 data=tempChart}}';
 component.html += '</template>';
 component.js = function () {
-
     Template.TEMPLATE_NAME.helpers({
         device_list: function(){
             var data    = Devices.find().fetch();
             var devices = _.pluck(data, 'device');
             return _.uniq(devices);
         },
-        sensor_list: function(){
+        sensor_list: function() {
             return;
-        }
+        },
+        tempChart: function() {
+            var colX = ['x'];
+            var colY = ['t1'];
+            var data = Measurements.find({topic: 'Measurements/Devices/arduino01/Sensors/1'}).fetch();
+            var msg   = _.pluck(data, 'message');
+            var dates = _.pluck(data, 'createdAt');
+            _.each(dates, function(f) {
+                colX.push(f);
+            });
+            _.each(msg, function(g) {
+                colY.push(parseInt(g));
+            });
+        return {
+          data: {
+            x: 'x',
+            xFormat: '%Y-%m-%d %H:%M:%S.%LZ',
+            columns: [colX, colY],
+            type: 'spline',
+          },
+          axis: {
+            x: {
+              type: 'timeseries',
+              localtime: false,
+              tick: {
+                count: 20,
+                format: '%Y-%m-%d %H:%M:%S'
+              }
+            }
+          }
+        };
+      }
     });
 
     Template.TEMPLATE_NAME.events({
