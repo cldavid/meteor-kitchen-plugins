@@ -3,47 +3,56 @@ var component = kitchen.getInput();
 
 component.html = '';
 component.html += '<template name="TEMPLATE_NAME">';
-component.html += '<select id=\"device_list-select\">';
-component.html += ' <option disabled=\"disabled\" selected=\"selected\">Please Select</option>';
-component.html += '     {{#each device_list}}';
-component.html += '     <option value=\"{{this}}\">{{this}}</option>';
-component.html += '     {{/each}}';
-component.html += '</select>';
-component.html += '<select id=\"sensor_list-select\">';
-component.html += ' <option disabled=\"disabled\" selected=\"selected\">Please Select</option>';
-component.html += '     {{#each sensor_list}}';
-component.html += '     <option value=\"{{this}}\">{{this}}</option>';
-component.html += '     {{/each}}';
-component.html += '</select>';
 component.html += '<h3>Temperature</h3>{{> c3 data=tempChart}}';
 component.html += '</template>';
 component.js = function () {
     Template.TEMPLATE_NAME.helpers({
-        device_list: function(){
-            var data    = Devices.find().fetch();
-            var devices = _.pluck(data, 'device');
-            return _.uniq(devices);
-        },
-        sensor_list: function() {
-            return;
-        },
         tempChart: function() {
-            var colX = ['x'];
-            var colY = ['t1'];
-            var data = Measurements.find({topic: 'Measurements/Devices/arduino01/Sensors/1'}).fetch();
-            var msg   = _.pluck(data, 'message');
-            var dates = _.pluck(data, 'createdAt');
-            _.each(dates, function(f) {
-                colX.push(f);
-            });
-            _.each(msg, function(g) {
-                colY.push(parseInt(g));
+            var logData = [];
+            var data    = Devices.find().fetch();
+            devices     = _.pluck(data, 'device');
+            devices     = _.uniq(devices);
+
+            _.each(devices, function(device) {
+              data        = Devices.find({device: device}).fetch();
+              var sensors = _.pluck(data, 'sensor');
+              sensors     = _.uniq(sensors);
+
+              _.each(sensors, function(sensor_no) {
+                data      = Measurements.find({topic: 'Measurements/Devices/' + device + '/Sensors/' + sensor_no}).fetch();
+                var msg   = _.pluck(data, 'message');
+                var dates = _.pluck(data, 'createdAt');
+
+                var item   = new Array('x-' + sensor_no);
+                _.each(dates, function(f) {
+                    item.push(f);
+                });
+                logData.push(item);
+
+                var item  = new Array(device + '/' + sensor_no);
+                _.each(msg, function(g) {
+                    item.push(parseInt(g));
+                });
+                logData.push(item);
+
+              });
             });
         return {
           data: {
-            x: 'x',
+            xs: {
+              'arduino01/1': 'x-1',
+              'arduino01/2': 'x-2',
+              'arduino01/3': 'x-3',
+              'arduino01/4': 'x-4',
+              'arduino01/5': 'x-5',
+              'arduino01/6': 'x-6',
+              'arduino01/7': 'x-7',
+              'arduino01/8': 'x-8',
+              'arduino01/9': 'x-9',
+              'arduino01/10': 'x-10',
+            },
             xFormat: '%Y-%m-%d %H:%M:%S.%LZ',
-            columns: [colX, colY],
+            columns: logData,
             type: 'spline',
           },
           axis: {
@@ -58,37 +67,6 @@ component.js = function () {
           }
         };
       }
-    });
-
-    Template.TEMPLATE_NAME.events({
-            "change #device_list-select": function (event, template) {
-                var device = $(event.currentTarget).val();
-                var data    = Devices.find({device: device}).fetch();
-                var sensors = _.pluck(data, 'sensor');
-
-                var sensorsList = document.getElementById('sensor_list-select');
-                if (sensorsList == null) {
-                  alert('list box is null');
-                  return;
-                }
-                sensorsList.options.length = 0;
-                var opt = document.createElement('option');
-                opt.innerHTML = "Please Select";
-                opt.disabled = true;
-                opt.selected = true;
-                sensorsList.appendChild(opt);
-                _.each(sensors, function(sensor) {
-                  var opt = document.createElement('option');
-                  opt.value = sensor;
-                  opt.innerHTML = sensor;
-                  sensorsList.appendChild(opt);
-                });
-            },
-            "change #sensor_list-select": function (event, template) {
-                var category = $(event.currentTarget).val();
-                console.log("sensor_list : " + category);
-            }
-
     });
 };
 
