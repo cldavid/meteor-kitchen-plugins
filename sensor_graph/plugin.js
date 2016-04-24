@@ -9,6 +9,10 @@ component.js = function () {
     Template.TEMPLATE_NAME.helpers({
         tempChart: function() {
             var logData = [];
+            var xsData  = {};
+            var curDate = new Date();
+            curDate.setTime(curDate.getTime()-(0.1*3600*1000)); //6H
+
             var data    = Devices.find().fetch();
             devices     = _.pluck(data, 'device');
             devices     = _.uniq(devices);
@@ -19,42 +23,34 @@ component.js = function () {
               sensors     = _.uniq(sensors);
 
               _.each(sensors, function(sensor_no) {
-                data      = Measurements.find({topic: 'Measurements/Devices/' + device + '/Sensors/' + sensor_no}).fetch();
+                data      = Measurements.find({topic: 'Measurements/Devices/' + device + '/Sensors/' + sensor_no, createdAt: {$gt: curDate}}).fetch();
                 var msg   = _.pluck(data, 'message');
                 var dates = _.pluck(data, 'createdAt');
 
-                var item   = new Array('x-' + sensor_no);
+                var xName   = 'x-' + sensor_no;
+                var yName   = device + '/' + sensor_no;
+                var item1   = new Array(xName);
                 _.each(dates, function(f) {
-                    item.push(f);
+                    item1.push(f);
                 });
-                logData.push(item);
+                logData.push(item1);
 
-                var item  = new Array(device + '/' + sensor_no);
+                var item2  = new Array(yName);
                 _.each(msg, function(g) {
-                    item.push(parseInt(g));
+                    item2.push(parseInt(g));
                 });
-                logData.push(item);
-
+                logData.push(item2);
+                xsData[yName] = xName;
               });
             });
         return {
           data: {
-            xs: {
-              'arduino01/1': 'x-1',
-              'arduino01/2': 'x-2',
-              'arduino01/3': 'x-3',
-              'arduino01/4': 'x-4',
-              'arduino01/5': 'x-5',
-              'arduino01/6': 'x-6',
-              'arduino01/7': 'x-7',
-              'arduino01/8': 'x-8',
-              'arduino01/9': 'x-9',
-              'arduino01/10': 'x-10',
-            },
+            xs: xsData,
             xFormat: '%Y-%m-%d %H:%M:%S.%LZ',
             columns: logData,
             type: 'spline',
           },
+          subchart: { show: true},
           axis: {
             x: {
               type: 'timeseries',
