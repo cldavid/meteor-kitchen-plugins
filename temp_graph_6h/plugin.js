@@ -22,22 +22,18 @@ component.js = function () {
       sensors     = _.uniq(sensors);
 
       _.each(sensors, function(sensor_no) {
-        data      = Measurements.find({topic: 'Measurements/Devices/' + device + '/Sensors/' + sensor_no, createdAt: {$gt: curDate}}).fetch();
-        var msg   = _.pluck(data, 'message');
-        var dates = _.pluck(data, 'createdAt');
-
+        data      = Measurements24h.find({topic: 'Devices/' + device + '/Sensors/' + sensor_no, createdAt: {$gt: curDate}}).fetch();
         var xName   = 'x-' + sensor_no;
         var yName   = device + '/' + sensor_no;
         var item1   = new Array(xName);
-        _.each(dates, function(f) {
-            item1.push(f);
+        var item2   = new Array(yName);
+
+        data.forEach(function(item) {
+            item1.push(item.createdAt);
+            item2.push(parseFloat((item.sum / item.nmeasurements)));
+            console.log(item.createdAt);
         });
         logData.push(item1);
-
-        var item2  = new Array(yName);
-        _.each(msg, function(g) {
-            item2.push(parseInt(g));
-        });
         logData.push(item2);
         xsData[yName] = xName;
       });
@@ -65,7 +61,7 @@ component.js = function () {
 
   Template.TEMPLATE_NAME.helpers({
       tempChart: function () {
-        var data = getSensorData(3);
+        var data = getSensorData(6);
         return(data);
       }
     });

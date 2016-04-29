@@ -1,6 +1,6 @@
 {
 	"packages": {
-		"meteor": ["reactive-dict", "perak:c3"],
+		"meteor": ["reactive-dict", "perak:c3", "meteorhacks:aggregate"],
 		"mrt"   : []
 	}
 }

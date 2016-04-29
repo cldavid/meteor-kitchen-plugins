@@ -10,6 +10,7 @@ component.js = function () {
     var logData = [];
     var xsData  = {};
     var curDate = new Date();
+
     curDate.setTime(curDate.getTime()-(lastHours*3600*1000));
 
     var data    = Devices.find().fetch();
